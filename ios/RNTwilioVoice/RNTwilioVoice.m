@@ -43,7 +43,7 @@ RCT_EXPORT_MODULE()
 
 - (NSArray<NSString *> *)supportedEvents
 {
-  return @[@"connectionDidConnect", @"connectionDidDisconnect", @"callRejected", @"deviceReady", @"deviceNotReady"];
+  return @[@"connectionDidConnect", @"connectionDidDisconnect", @"callRejected", @"deviceReady", @"deviceNotReady", @"deviceDidReceiveIncoming"];
 }
 
 @synthesize bridge = _bridge;
@@ -126,6 +126,34 @@ RCT_EXPORT_METHOD(connect: (NSDictionary *)params) {
 RCT_EXPORT_METHOD(disconnect) {
   NSLog(@"Disconnecting call");
   [self performEndCallActionWithUUID:self.call.uuid];
+}
+
+RCT_EXPORT_METHOD(updateCall:(NSString *)uuidStr meta:(NSDictionary *)params) {
+  if (!uuidStr) {
+    return;
+  }
+
+  NSUUID * uuid = [[NSUUID alloc] initWithUUIDString:uuidStr];
+  CXHandle *callHandle;
+
+  if (params[@"phoneNumber"]) {
+    callHandle = [[CXHandle alloc] initWithType:CXHandleTypePhoneNumber value:params[@"phoneNumber"]];
+  }
+  else if (params[@"emailAddress"]) {
+    callHandle = [[CXHandle alloc] initWithType:CXHandleTypeEmailAddress value:params[@"emailAddress"]];
+  }
+  else if (params[@"handle"]) {
+    callHandle = [[CXHandle alloc] initWithType:CXHandleTypeGeneric value:params[@"handle"]];
+  }
+
+  CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
+  callUpdate.remoteHandle = callHandle;
+
+  if (params[@"name"]) {
+    callUpdate.localizedCallerName = params[@"uuid"];
+  }
+
+  [self.callKitProvider reportCallWithUUID:uuid updated:callUpdate];
 }
 
 RCT_EXPORT_METHOD(setMuted: (BOOL *)muted) {
@@ -302,6 +330,15 @@ RCT_REMAP_METHOD(getActiveCall,
   self.callInvite = callInvite;
 
   [self reportIncomingCallFrom:callInvite.from withUUID:callInvite.uuid];
+
+  NSMutableDictionary *callParams = [[NSMutableDictionary alloc] init];
+
+  callParams[@"uuid"] = callInvite.uuid;
+  callParams[@"from"] = callInvite.from;
+  callParams[@"to"] = callInvite.to;
+  callParams[@"call_sid"] = callInvite.callSid;
+
+  [self sendEventWithName:@"deviceDidReceiveIncoming" body:callParams];
 }
 
 - (void)handleCallInviteCanceled:(TVOCallInvite *)callInvite {
