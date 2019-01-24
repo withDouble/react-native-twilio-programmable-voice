@@ -207,9 +207,10 @@ RCT_REMAP_METHOD(getActiveCall,
 }
 
 - (void)initPushRegistry {
-  self.voipRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
-  self.voipRegistry.delegate = self;
-  self.voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
+  [UIApplication.sharedApplication.delegate performSelector:@selector(setVoipPushRegistryDelegate:) withObject:self];
+//  self.voipRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
+//  self.voipRegistry.delegate = self;
+//  self.voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 }
 
 - (NSString *)fetchAccessToken {
