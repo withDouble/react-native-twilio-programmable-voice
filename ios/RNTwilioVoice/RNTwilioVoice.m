@@ -102,9 +102,24 @@ RCT_EXPORT_METHOD(connect: (NSDictionary *)params) {
     [self.call disconnect];
   } else {
     NSUUID *uuid = [NSUUID UUID];
-    NSString *handle = [params valueForKey:@"To"];
+
+    CXHandle *callHandle;
+
+    if (params[@"phoneNumber"]) {
+      callHandle = [[CXHandle alloc] initWithType:CXHandleTypePhoneNumber value:params[@"phoneNumber"]];
+    }
+    else if (params[@"emailAddress"]) {
+      callHandle = [[CXHandle alloc] initWithType:CXHandleTypeEmailAddress value:params[@"emailAddress"]];
+    }
+    else if (params[@"handle"]) {
+      callHandle = [[CXHandle alloc] initWithType:CXHandleTypeGeneric value:params[@"handle"]];
+    }
+    else {
+      callHandle = [[CXHandle alloc] initWithType:CXHandleTypeGeneric value:params[@"To"]];
+    }
+
     _callParams = [[NSMutableDictionary alloc] initWithDictionary:params];
-    [self performStartCallActionWithUUID:uuid handle:handle];
+    [self performStartCallActionWithUUID:uuid handle:callHandle localizedCallerName:params[@"name"]];
   }
 }
 
@@ -495,12 +510,11 @@ RCT_REMAP_METHOD(getActiveCall,
 }
 
 #pragma mark - CallKit Actions
-- (void)performStartCallActionWithUUID:(NSUUID *)uuid handle:(NSString *)handle {
-  if (uuid == nil || handle == nil) {
+- (void)performStartCallActionWithUUID:(NSUUID *)uuid handle:(CXHandle *)callHandle localizedCallerName:(NSString *)name {
+  if (uuid == nil || callHandle == nil) {
     return;
   }
 
-  CXHandle *callHandle = [[CXHandle alloc] initWithType:CXHandleTypeGeneric value:handle];
   CXStartCallAction *startCallAction = [[CXStartCallAction alloc] initWithCallUUID:uuid handle:callHandle];
   CXTransaction *transaction = [[CXTransaction alloc] initWithAction:startCallAction];
 
@@ -512,6 +526,7 @@ RCT_REMAP_METHOD(getActiveCall,
 
       CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
       callUpdate.remoteHandle = callHandle;
+      callUpdate.localizedCallerName = name;
       callUpdate.supportsDTMF = YES;
       callUpdate.supportsHolding = YES;
       callUpdate.supportsGrouping = NO;
