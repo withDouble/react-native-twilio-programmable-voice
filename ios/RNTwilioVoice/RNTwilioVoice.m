@@ -150,7 +150,7 @@ RCT_EXPORT_METHOD(updateCall:(NSString *)uuidStr meta:(NSDictionary *)params) {
   callUpdate.remoteHandle = callHandle;
 
   if (params[@"name"]) {
-    callUpdate.localizedCallerName = params[@"uuid"];
+    callUpdate.localizedCallerName = params[@"name"];
   }
 
   [self.callKitProvider reportCallWithUUID:uuid updated:callUpdate];
@@ -338,7 +338,7 @@ RCT_REMAP_METHOD(getActiveCall,
 
   NSMutableDictionary *callParams = [[NSMutableDictionary alloc] init];
 
-  callParams[@"uuid"] = callInvite.uuid;
+  callParams[@"uuid"] = callInvite.uuid.UUIDString;
   callParams[@"from"] = callInvite.from;
   callParams[@"to"] = callInvite.to;
   callParams[@"call_sid"] = callInvite.callSid;

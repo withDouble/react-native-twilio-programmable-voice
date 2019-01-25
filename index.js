@@ -90,6 +90,9 @@ const Twilio = {
     getActiveCall() {
         return TwilioVoice.getActiveCall()
     },
+    updateCall(uuid, params) {
+      return TwilioVoice.updateCall(uuid, params)
+    },
     configureCallKit(params = {}) {
         if (Platform.OS === IOS) {
             TwilioVoice.configureCallKit(params)
